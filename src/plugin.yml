@@ -1,0 +1,124 @@
+name: redProtect
+main: com.OverCaste.plugin.RedProtect.RedProtect
+version: 1.7.0
+website: www.legendarycraft.com
+author: ikillforeyou (OverCaste)
+description: Allows players to define fields to protect their houses.
+softdepend: [PermissionsEX, bPermissions]
+commands:
+  RedProtect:
+    description: "Main command for redprotect."
+    usage: "Error, read '/rp ?' for more information."
+    aliases: [rp, redp, rprotect]
+permissions:
+  redprotect.*:
+    description: "All redprotect commands."
+    children:
+      redprotect.user: true
+      redprotect.admin: true
+  redprotect.user:
+    description: "Recommended User permissions."
+    default: op
+    children:
+      redprotect.create: true
+      redprotect.near: true
+      redprotect.own.addmember: true
+      redprotect.own.delete: true
+      redprotect.own.info: true
+      redprotect.own.addowner: true
+      redprotect.own.removemember: true
+      redprotect.own.removeowner: true
+      redprotect.own.rename: true
+      redprotect.own.limit: true
+      redprotect.own.list: true
+      redprotect.flag.chest: true
+      redprotect.flag.lever: true
+      redprotect.flag.button: true
+      redprotect.flag.door: true
+  redprotect.flag.all:
+    description: "Access to edit all flags."
+    default: op
+    children:
+      redprotect.flag.pvp: true
+      redprotect.flag.chest: true
+      redprotect.flag.lever: true
+      redprotect.flag.button: true
+      redprotect.flag.door: true
+      redprotect.flag.mobs: true
+      redprotect.flag.animals: true
+  redprotect.admin:
+    description: "Recommended Admin permsisions."
+    default: op
+    children:
+      redprotect.admin.delete: true
+      redprotect.admin.removeowner: true
+      redprotect.admin.addowner: true
+      redprotect.admin.addmember: true
+      redprotect.admin.removemember: true
+      redprotect.admin.info: true
+      redprotect.admin.rename: true
+      redprotect.admin.flag: true
+      redprotect.admin.define: true
+      redprotect.bypass: true
+      redprotect.unlimited: true
+      redprotect.magicwand: true
+  redprotect.near:
+    description: "Use /rp near to find nearby regions."
+  redprotect.create:
+    description: "Create regions."
+  redprotect.own.addmember:
+    description: "Add members to regions you're an owner of."
+  redprotect.own.addowner:
+    description: "Add owners to regions you're an owner of."
+  redprotect.own.removemember:
+    description: "Remove members from regions you're an owner of."
+  redprotect.own.removeowner:
+    description: "Remove owners from regions you're an owner of."
+  redprotect.own.delete:
+    description: "Delete regions you're an owner of."
+  redprotect.own.rename:
+    description: "Rename regions you own."
+  redprotect.own.limit:
+    description: "Find the area restriction limits for yourself."
+  redprotect.own.list:
+    description: "Find the information about regions you own."
+  redprotect.flag.pvp:
+    description: "Toggle the pvp flag."
+  redprotect.flag.chest:
+    description: "Toggle the chest access flag."
+  redprotect.flag.lever:
+    description: "Toggle the lever usage flag."
+  redprotect.flag.button:
+    description: "Toggle the button access flag."
+  redprotect.flag.door:
+    description: "Toggle the door opening flag."
+  redprotect.flag.mobs:
+    description: "Toggle the mob spawning flag."
+  redprotect.flag.animals:
+    description: "Toggle the animal hurting flag."
+  redprotect.admin.delete:
+    description: "Delete any region."
+  redprotect.admin.removeowner:
+    description: "Remove owners from any region."
+  redprotect.admin.addowner:
+    description: "Add owners to any region."
+  redprotect.admin.addmember:
+    description: "Add members to any region."
+  redprotect.admin.removemember:
+    description: "Remove members to any region."
+  redprotect.admin.info:
+    description: "Get info from any region."
+  redprotect.admin.rename:
+    description: "Rename any region"
+  redprotect.admin.list:
+    description: "Find the information about regions other players own."
+  redprotect.admin.flag:
+    description: "Toggle flags on other's regions"
+  redprotect.admin.define:
+    description: "Create large regions by selecting two points."
+  redprotect.bypass:
+    description: "Build, break, or PvP In any region"
+  redprotect.unlimited:
+    description: "Make any number of regions."
+  redprotect.magicwand:
+    description: "Allows you to use the magic wand"
