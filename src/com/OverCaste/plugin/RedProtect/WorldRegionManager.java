@@ -43,5 +43,6 @@ public interface WorldRegionManager {
 	abstract void setRegionName(Region rect, String name);
 
 	abstract boolean regionExists(int x, int z);
-	
+
+	abstract Set<Region> getPossibleIntersectingRegions(Region r);
 }

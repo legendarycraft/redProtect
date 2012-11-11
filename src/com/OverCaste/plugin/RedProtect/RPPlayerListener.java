@@ -22,7 +22,7 @@ public class RPPlayerListener implements Listener {
 		Player p = e.getPlayer();
 		Block b = e.getClickedBlock();
 		if (b == null) return;
-		Region r;
+		Region r = null;
 		Material itemInHand = p.getItemInHand().getType();
 		
 		if(p.getItemInHand().getTypeId() == RedProtect.adminWandID) {
@@ -31,6 +31,7 @@ public class RPPlayerListener implements Listener {
 					RedProtect.secondLocationSelections.put(p, b.getLocation());
 					p.sendMessage(ChatColor.AQUA + "Set the second magic wand location to (" + ChatColor.GOLD + b.getLocation().getBlockX() + ChatColor.AQUA + ", " + ChatColor.GOLD + b.getLocation().getBlockY() + ChatColor.AQUA + ", " + ChatColor.GOLD + b.getLocation().getBlockZ() + ChatColor.AQUA + ").");
 					e.setCancelled(true);
+					return;
 				}
 			}
 			else if(e.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
@@ -38,7 +39,27 @@ public class RPPlayerListener implements Listener {
 					RedProtect.firstLocationSelections.put(p, b.getLocation());
 					p.sendMessage(ChatColor.AQUA + "Set the first magic wand location to (" + ChatColor.GOLD + b.getLocation().getBlockX() + ChatColor.AQUA + ", " + ChatColor.GOLD + b.getLocation().getBlockY() + ChatColor.AQUA + ", " + ChatColor.GOLD + b.getLocation().getBlockZ() + ChatColor.AQUA + ").");
 					e.setCancelled(true);
+					return;
 				}
+			}
+		}
+		if(p.getItemInHand().getTypeId() == RedProtect.infoWandID) {
+			if(e.getAction().equals(Action.RIGHT_CLICK_AIR)) {
+				r = RedProtect.rm.getRegion(p.getLocation());
+			}
+			else if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+				r = RedProtect.rm.getRegion(b.getLocation());
+			}
+			if(p.hasPermission("redprotect.infowand")) {
+				if(r == null) {
+					p.sendMessage(ChatColor.RED + "There is no region at that block's location!");
+				} else {
+					p.sendMessage(ChatColor.AQUA + "--------------- [" + ChatColor.GOLD + r.getName() + ChatColor.AQUA + "] ---------------");
+					p.sendMessage(r.info());
+					p.sendMessage(r.getFlagInfo());
+				}
+				e.setCancelled(true);
+				return;
 			}
 		}
 		
@@ -68,7 +89,7 @@ public class RPPlayerListener implements Listener {
 			}
 		}
 		
-		else if (b.getType().equals(Material.FURNACE)){
+		else if (b.getType().equals(Material.FURNACE)||b.getType().equals(Material.BURNING_FURNACE)){
 			r = RedProtect.rm.getRegion(b.getLocation());
 			if(r == null) return;
 			if(!r.canChest(p)){
@@ -120,7 +141,7 @@ public class RPPlayerListener implements Listener {
 			}
 		}
 
-		if (itemInHand.equals(Material.FLINT_AND_STEEL)||itemInHand.equals(Material.WATER_BUCKET)||itemInHand.equals(Material.LAVA_BUCKET)||itemInHand.equals(Material.PAINTING)){
+		if (itemInHand.equals(Material.FLINT_AND_STEEL)||itemInHand.equals(Material.WATER_BUCKET)||itemInHand.equals(Material.LAVA_BUCKET)||itemInHand.equals(Material.PAINTING)||itemInHand.equals(Material.ITEM_FRAME)){
 			if (!RedProtect.rm.canBuild(p, b, b.getWorld())){
 				p.sendMessage(ChatColor.RED + "You can't use that here!");
 				e.setCancelled(true);

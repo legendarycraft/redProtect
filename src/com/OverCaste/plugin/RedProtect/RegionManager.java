@@ -18,8 +18,11 @@ public class RegionManager {
 	public void loadAll() throws Exception {
 		Iterator<World> worlds = Bukkit.getWorlds().iterator();
 		while(worlds.hasNext()) {
-			WorldRegionManager mgr;
 			World w = worlds.next();
+			WorldRegionManager mgr;
+			if(regionManagers.containsKey(w)) {
+				continue;
+			}
 			if(RedProtect.fileType == RedProtect.FILE_TYPE.mysql) {
 				mgr = new WorldMySQLRegionManager(w);
 			} else {
@@ -136,17 +139,17 @@ public class RegionManager {
 	public Region getRegion(Location location){
 		return regionManagers.get(location.getWorld()).getRegion(location);
 	}
-
-	/*public World getWorld(Region region) {
-		Iterator<WorldRegionManager> rms = regionManagers.values().iterator();
-		while(rms.hasNext()){
-			WorldRegionManager rm = rms.next();
-			if(rm.regionExists(region)) {
-				return rm.getWorld();
-			}
-		}
-		return null;
-	}*/
+	
+	/**
+	 * 
+	 * @param The region of which to be compared.
+	 * @param The world of the region.
+	 * @return A set of regions that are inside of the minimum bounding rectangle of the region.
+	 */
+	
+	public Set<Region> getPossibleIntersectingRegions(Region r, World w) {
+		return regionManagers.get(w).getPossibleIntersectingRegions(r);
+	}
 
 	public void rename(Region rect, String name, World world) {
 		WorldRegionManager rm = regionManagers.get(world);
@@ -163,17 +166,4 @@ public class RegionManager {
 		}
 		rm.setFlagValue(rect, flag, value);
 	}
-	
-	/*public World getWorld(WorldRegionManager rm) {
-		if(regionManagers.containsValue(rm)) {
-			Iterator<World> ws = Bukkit.getWorlds().iterator();
-			while(ws.hasNext()){
-				World w = ws.next();
-				if(regionManagers.get(w).equals(rm)) {
-					return w;
-				}
-			}
-		}
-		return null;
-	}*/
 }

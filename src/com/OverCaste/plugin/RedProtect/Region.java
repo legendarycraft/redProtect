@@ -2,6 +2,7 @@ package com.OverCaste.plugin.RedProtect;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.bukkit.ChatColor.*;
@@ -17,11 +18,11 @@ public class Region implements Serializable {
 	private int minMbrZ = 0;
 	private int maxMbrZ = 0;
 	private String name;
-	private List<String> owners;
+	private LinkedList<String> owners;
 	private List<String> members;
 	private String creator = "";
 	
-	private boolean[] f = {Flags.pvp, Flags.chest, Flags.lever, Flags.button, Flags.door, Flags.mobs, Flags.animals}; //flags, see Flags.java
+	protected boolean[] f = {Flags.pvp, Flags.chest, Flags.lever, Flags.button, Flags.door, Flags.mobs, Flags.passive}; //flags, see Flags.java
 	
 	public void setFlag(int flag, boolean value){
 		if(flag > f.length){
@@ -36,7 +37,7 @@ public class Region implements Serializable {
 	public void setZ(int[] z){
 		this.z = z;
 	}
-	public void setOwners(List<String> owners){
+	public void setOwners(LinkedList<String> owners){
 		this.owners = owners;
 	}
 	public void setMembers(List<String> members){
@@ -57,7 +58,7 @@ public class Region implements Serializable {
 	public String getName(){
 		return name;
 	}
-	public List<String> getOwners(){
+	public LinkedList<String> getOwners(){
 		return owners;
 	}
 	public List<String> getMembers(){
@@ -117,7 +118,7 @@ public class Region implements Serializable {
 		return true;
 	}*/
 	
-	public Region(int[] x, int[] z, String name, List<String> owners, List<String> members, String creator, int maxMbrX, int minMbrX, int maxMbrZ, int minMbrZ, boolean[] flags){
+	public Region(int[] x, int[] z, String name, LinkedList<String> owners, List<String> members, String creator, int maxMbrX, int minMbrX, int maxMbrZ, int minMbrZ, boolean[] flags){
 		this.x = x;
 		this.z = z;
 		this.maxMbrX = maxMbrX;
@@ -131,29 +132,25 @@ public class Region implements Serializable {
 		this.f = flags;
 	}
 	
-	public Region(String name, String[] owners, int[] x, int[] z){
-		int xSize = x.length;
-		int zSize = z.length;
+	public Region(String name, LinkedList<String> owners, int[] x, int[] z){
+		int size = x.length;
+		if (size != z.length){
+			throw new Error("The X & Z arrays are different sizes!");
+		}
 		this.x = x;
 		this.z = z;
-		if ((xSize < 4) ||(zSize < 4)){
+		if (size < 4){
 			throw new Error("You can't generate a polygon with less then 4 points!");
 		}
-		if (xSize != zSize){
-			throw new Error("The X & Y arrays are different sizes!");
-		}
-		if (xSize == 4){
+		if (size == 4){
 			//RedProtect.logger.debug("One of these regions, is not like the other ones, one of these regions, is an mbr.");
 			this.x = null;
 			this.z = null;
 		}
-		this.owners = new ArrayList<String>(owners.length);
-		for(String s : owners) {
-			this.owners.add(s);
-		}
+		this.owners = owners;
 		this.members = new ArrayList<String>();
 		this.name = name;
-		this.creator = owners[0];
+		this.creator = owners.getFirst();
 		maxMbrX = x[0];
 		minMbrX = x[0];
 		maxMbrZ = z[0];
@@ -161,11 +158,9 @@ public class Region implements Serializable {
 		for (int i = 0; i<x.length; i++){
 			if(x[i] > maxMbrX){
 				maxMbrX = x[i];
-				//RedProtect.logger.debug("New maxMbrX: " + x[i] + ", " + i);
 			}
 			if(x[i] < minMbrX){
 				minMbrX = x[i];
-				//RedProtect.logger.debug("New minMbrX: " + x[i] + ", " + i);
 			}
 			if(z[i] > maxMbrZ){
 				maxMbrZ = z[i];
@@ -242,6 +237,22 @@ public class Region implements Serializable {
 		return ((bx<=maxMbrX)&&(bx>=minMbrX)&&(bz<=maxMbrZ)&&(bz>=minMbrZ));
 	}
 	
+	public boolean inBoundingRect(Region other) {
+		if(other.maxMbrX<minMbrX) {
+			return false;
+		}
+		if(other.maxMbrZ<minMbrZ) {
+			return false;
+		}
+		if(other.minMbrX>maxMbrX) {
+			return false;
+		}
+		if(other.minMbrZ>maxMbrZ) {
+			return false;
+		}
+		return true;
+	}
+	
 	public boolean intersects(int bx, int bz) {
 		if (this.x == null) {
 			//RedProtect.logger.info("x = null. =(");
@@ -312,7 +323,6 @@ public class Region implements Serializable {
 	}
 	
 	public boolean getFlag(int flag){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		return f[flag];
 	}
 	
@@ -322,15 +332,13 @@ public class Region implements Serializable {
 	}
 	
 	public boolean canPVP(Player p){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		if(f[0]){ //if flag 0, pvp, allowed
 			return true;
 		}
-		return (isOwner(p) || isMember(p) || RedProtect.ph.hasPerm(p, "redprotect.bypass"));
+		return (RedProtect.ph.hasPerm(p, "redprotect.bypass"));
 	}
 	
 	public boolean canChest(Player p){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		if(f[1]){
 			return true;
 		}
@@ -338,7 +346,6 @@ public class Region implements Serializable {
 	}
 	
 	public boolean canLever(Player p){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		if(f[2]){
 			return true;
 		}
@@ -346,7 +353,6 @@ public class Region implements Serializable {
 	}
 	
 	public boolean canButton(Player p){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		if(f[3]){
 			return true;
 		}
@@ -354,7 +360,6 @@ public class Region implements Serializable {
 	}
 	
 	public boolean canDoor(Player p){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		if(f[4]){
 			return true;
 		}
@@ -362,36 +367,21 @@ public class Region implements Serializable {
 	}
 	
 	public boolean canMobs(){
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
 		return f[5];
 	}
 	
-	public boolean canAnimals(Player p){
-		if(f[5]){
+	public boolean canHurtPassives(Player p){
+		if(f[6]){
 			return true;
 		}
 		return (isOwner(p) || isMember(p) || RedProtect.ph.hasPerm(p, "redprotect.bypass"));
-	}
-	
-	private void checkNullFlags() {
-		if(f == null){
-			f = new boolean[6];
-			f[0] = Flags.pvp;
-			f[1] = Flags.chest;
-			f[2] = Flags.lever;
-			f[3] = Flags.button;
-			f[4] = Flags.door;
-			f[5] = Flags.mobs;
-			f[6] = Flags.animals;
-		}
 	}
 	
 	public int ownersSize(){
 		return owners.size();
 	}
 	public String getFlagInfo() {
-		checkNullFlags(); //TODO: Remove in 5 versions or so.
-		return(AQUA + "Player vs Player: " + GOLD + f[0] + AQUA + ", Chest opening: " + GOLD + f[1] + AQUA + ", Lever flipping: " + GOLD + f[2] + AQUA + ", Button pushing: " + GOLD + f[3] + AQUA + ", Door toggling: " + GOLD + f[4] + AQUA + ", Monster spawning: " + GOLD + f[5] + AQUA + ", Animal hurting: " + GOLD + f[6]);
+		return(AQUA + "Player vs Player: " + GOLD + f[0] + AQUA + ", Chest opening: " + GOLD + f[1] + AQUA + ", Lever flipping: " + GOLD + f[2] + AQUA + ", Button pushing: " + GOLD + f[3] + AQUA + ", Door toggling: " + GOLD + f[4] + AQUA + ", Monster spawning: " + GOLD + f[5] + AQUA + ", Passive entity hurting: " + GOLD + f[6]);
 	}
 	public void setName(String name) {
 		this.name = name;
