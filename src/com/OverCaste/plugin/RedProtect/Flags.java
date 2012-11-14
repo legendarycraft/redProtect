@@ -7,5 +7,5 @@ public class Flags {
 	static boolean button = true; //3 
 	static boolean door = false; //4
 	static boolean mobs = true; //5
-	static boolean animals = false; //6
+	static boolean passive = false; //6
 }

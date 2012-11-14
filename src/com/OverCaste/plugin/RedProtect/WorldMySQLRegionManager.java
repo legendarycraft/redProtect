@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -520,7 +521,7 @@ public class WorldMySQLRegionManager implements WorldRegionManager {
 		int regionUID = getRegionUID(rname);
 		int[] x;
 		int[] z;
-		List<String> owners = new ArrayList<String>();
+		LinkedList<String> owners = new LinkedList<String>();
 		List<String> members = new ArrayList<String>();
 		int maxMbrX = 0;
 		int minMbrX = 0;
@@ -697,5 +698,11 @@ public class WorldMySQLRegionManager implements WorldRegionManager {
 	@Override
 	public void setRegionName(Region rect, String name) {
 		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public Set<Region> getPossibleIntersectingRegions(Region r) {
+		//TODO stuff
+		return null;
 	}
 }

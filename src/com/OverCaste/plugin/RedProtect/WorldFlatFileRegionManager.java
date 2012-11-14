@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 import org.yaml.snakeyaml.Yaml;
 
 public class WorldFlatFileRegionManager implements WorldRegionManager {
-	HashMap<Long, LargeChunkObject> regions = new HashMap<Long, LargeChunkObject>();
+	HashMap<Long, LargeChunkObject> regions = new HashMap<Long, LargeChunkObject>(100);
 	World world;
 	
 	public WorldFlatFileRegionManager(World world) {
@@ -32,7 +32,6 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 					lco = new LargeChunkObject();
 				}
 				lco.addRegion(r);
-				
 				regions.put(Location2I.getXZLong(xl, zl), lco);
 			}
 		}
@@ -64,6 +63,9 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 		if(lco == null) {
 			return true;
 		}
+		if(lco.regions == null) {
+			return true;
+		}
 		Iterator<Region> i = lco.regions.iterator();
 		while(i.hasNext()){
 			Region poly = i.next();
@@ -84,15 +86,14 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	@Override
 	public Set<Region> getRegions(String p){
 		Set<Region> ls = new HashSet<Region>();
-		Iterator<LargeChunkObject> i = regions.values().iterator();
-		while(i.hasNext()){
-			LargeChunkObject lci = i.next();
-			if(lci == null) {
+		for(LargeChunkObject lco : regions.values()) {
+			if(lco == null) {
 				continue;
 			}
-			Iterator<Region> ri = lci.regions.iterator();
-			while(ri.hasNext()) {
-				Region r = ri.next();
+			if(lco.regions == null) {
+				continue;
+			}
+			for(Region r : lco.regions) {
 				if(r.getCreator().equalsIgnoreCase(p)){
 					ls.add(r);
 				}
@@ -135,7 +136,7 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	
 	private Region getRegion(int x, int z){
 		LargeChunkObject lco = regions.get(LargeChunkObject.getBlockLCOLong(x, z));
-		if(lco == null) {
+		if(lco == null || lco.regions == null) {
 			return null;
 		}
 		Iterator<Region> i = lco.regions.iterator();
@@ -151,20 +152,18 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	}
 	
 	@Override
-	public Region getRegion(Player p){
+	public Region getRegion(Player p) {
 		return getRegion(p.getLocation());
 	}
 	
 	@Override
-	public Region getRegion(String name){
+	public Region getRegion(String name) {
 		if (name == null) return null;
-		Iterator<LargeChunkObject> i = regions.values().iterator();
-		while(i.hasNext()){
-			LargeChunkObject lci = i.next();
-			if(lci == null) {
+		for(LargeChunkObject lco : regions.values()) {
+			if(lco == null || lco.regions == null) {
 				continue;
 			}
-			Iterator<Region> ri = lci.regions.iterator();
+			Iterator<Region> ri = lco.regions.iterator();
 			while(ri.hasNext()) {
 				Region r = ri.next();
 				if(r.getName().equals(name)){
@@ -197,6 +196,9 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 			}
 			HashMap<String, Region> newRegions = new HashMap<String, Region>();
 			for(LargeChunkObject lco : regions.values()) {
+				if(lco.regions == null) {
+					continue;
+				}
 				for(Region r : lco.regions) {
 					newRegions.put(r.getName(), r);
 				}
@@ -252,33 +254,37 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	@Override
 	public int getTotalRegionSize(String p){
 		if (p == null) return 0;
+		p = p.toLowerCase();
 		int total = 0;
-		Iterator<LargeChunkObject> i = regions.values().iterator();
-		while(i.hasNext()){
-			LargeChunkObject lci = i.next();
-			Iterator<Region> ri = lci.regions.iterator();
-			while(ri.hasNext()) {
-				Region r = ri.next();
-				if(r.getCreator().equalsIgnoreCase(p)){
-					total++;
-				}
+		Set<Region> regions = new HashSet<Region>();
+		for(LargeChunkObject lco : this.regions.values()) {
+			if(lco.regions == null) {
+				continue;
+			}
+			for(Region r : lco.regions) {
+				regions.add(r);
+			}
+		}
+		for(Region r : regions) {
+			if(r.getCreator().equals(p)) {
+				total+=r.getArea();
 			}
 		}
 		return total;
 	}
 	
 	@Override
-	public boolean isSurroundingRegion(Region p){
-		if (p == null) return false;
-		Iterator<LargeChunkObject> i = regions.values().iterator();
-		while(i.hasNext()){
-			LargeChunkObject lci = i.next();
-			Iterator<Region> ri = lci.regions.iterator();
-			while(ri.hasNext()) {
-				Region r = ri.next();
-				if (r != null){
-					if (p.inBoundingRect(r.getCenterX(), r.getCenterZ())) {
-						if (p.intersects(r.getCenterX(), r.getCenterZ())){
+	public boolean isSurroundingRegion(Region r){
+		if (r == null) return false;
+		for(LargeChunkObject lco : getRegionLcos(r)) {
+			if(lco == null || lco.regions == null) {
+				continue;
+			}
+			for(Region other : lco.regions) {
+				if (other != null){
+					if (r.inBoundingRect(other.getCenterX(), other.getCenterZ())) {
+						if (r.intersects(other.getCenterX(), other.getCenterZ())){
+							System.out.println("Intersecting!: " + other.info());
 							return true;
 						}
 					}
@@ -298,9 +304,10 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	private void load(String path){
 		String world = getWorld().getName();
 		String datbackf = (RedProtect.pathData + "data_" + world + ".regions.backup");
-		if(!(new File(path).exists())) {
+		File f;
+		if(!((f = new File(path)).exists())) {
 			try {
-				new File(path).createNewFile();
+				f.createNewFile();
 				RedProtect.logger.info("Created new world region file: (" + path + ").");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -390,10 +397,10 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	public Set<Region> getRegionsNear(Player player, int area) {
 		int px = player.getLocation().getBlockX();
 		int pz = player.getLocation().getBlockZ();
-		int cmaxX = LargeChunkObject.convertBlockToLCO(px+40);
-		int cmaxZ = LargeChunkObject.convertBlockToLCO(pz+40);
-		int cminX = LargeChunkObject.convertBlockToLCO(px-40);
-		int cminZ = LargeChunkObject.convertBlockToLCO(pz-40);
+		int cmaxX = LargeChunkObject.convertBlockToLCO(px+area);
+		int cmaxZ = LargeChunkObject.convertBlockToLCO(pz+area);
+		int cminX = LargeChunkObject.convertBlockToLCO(px-area);
+		int cminZ = LargeChunkObject.convertBlockToLCO(pz-area);
 		Set<Region> ret = new HashSet<Region>();
 		for(int xl = cminX; xl<=cmaxX; xl++) {
 			for(int zl = cminZ; zl<=cmaxZ; zl++) {
@@ -404,7 +411,7 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 				Iterator<Region> i = lco.regions.iterator();
 				while(i.hasNext()){
 					Region poly = i.next();
-					if(((Math.abs(poly.getCenterX() - px) <= 40) && (Math.abs(poly.getCenterZ() - pz) <= 40))){
+					if(((Math.abs(poly.getCenterX() - px) <= area) && (Math.abs(poly.getCenterZ() - pz) <= area))){
 						ret.add(poly);
 					}
 				}
@@ -418,10 +425,11 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 		if(region == null) {
 			return false;
 		}
-		Iterator<LargeChunkObject> i = regions.values().iterator();
-		while(i.hasNext()){
-			LargeChunkObject lci = i.next();
-			Iterator<Region> ri = lci.regions.iterator();
+		for(LargeChunkObject lco : regions.values()) {
+			if(lco.regions == null) {
+				continue;
+			}
+			Iterator<Region> ri = lco.regions.iterator();
 			while(ri.hasNext()) {
 				Region r = ri.next();
 				if (r != null){
@@ -446,5 +454,51 @@ public class WorldFlatFileRegionManager implements WorldRegionManager {
 	@Override
 	public void setRegionName(Region region, String name) {
 		region.setName(name);
+	}
+
+	@Override
+	public Set<Region> getPossibleIntersectingRegions(Region r) {
+		Set<Region> ret = new HashSet<Region>();
+		if(r == null) {
+			return ret;
+		}
+		int cmaxX = LargeChunkObject.convertBlockToLCO(r.getMaxMbrX());
+		int cmaxZ = LargeChunkObject.convertBlockToLCO(r.getMaxMbrZ());
+		int cminX = LargeChunkObject.convertBlockToLCO(r.getMinMbrX());
+		int cminZ = LargeChunkObject.convertBlockToLCO(r.getMinMbrZ());
+		for(int xl = cminX; xl<=cmaxX; xl++) {
+			for(int zl = cminZ; zl<=cmaxZ; zl++) {
+				LargeChunkObject lco = regions.get(Location2I.getXZLong(xl, zl));
+				if(lco == null || lco.regions == null) {
+					continue;
+				}
+				Iterator<Region> i = lco.regions.iterator();
+				while(i.hasNext()){
+					Region other = i.next();
+					if(r.inBoundingRect(other)) {
+						ret.add(other);
+					}
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public List<LargeChunkObject> getRegionLcos(Region r) {
+		List<LargeChunkObject> ret = new LinkedList<LargeChunkObject>();
+		int cmaxX = LargeChunkObject.convertBlockToLCO(r.getMaxMbrX());
+		int cmaxZ = LargeChunkObject.convertBlockToLCO(r.getMaxMbrZ());
+		int cminX = LargeChunkObject.convertBlockToLCO(r.getMinMbrX());
+		int cminZ = LargeChunkObject.convertBlockToLCO(r.getMinMbrZ());
+		for(int xl = cminX; xl<=cmaxX; xl++) {
+			for(int zl = cminZ; zl<=cmaxZ; zl++) {
+				LargeChunkObject lco = regions.get(Location2I.getXZLong(xl, zl));
+				if(lco == null || lco.regions == null) {
+					continue;
+				}
+				ret.add(lco);
+			}
+		}
+		return ret;
 	}
 }

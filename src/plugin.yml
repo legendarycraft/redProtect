@@ -1,10 +1,9 @@
 name: redProtect
 main: com.OverCaste.plugin.RedProtect.RedProtect
-version: 1.7.0
-website: www.legendarycraft.com
+version: 1.9.2
 author: ikillforeyou (OverCaste)
 description: Allows players to define fields to protect their houses.
-softdepend: [PermissionsEX, bPermissions]
+softdepend: [Vault]
 commands:
   RedProtect:
     description: "Main command for redprotect."
@@ -31,6 +30,7 @@ permissions:
       redprotect.own.rename: true
       redprotect.own.limit: true
       redprotect.own.list: true
+      redprotect.infowand: true
       redprotect.flag.chest: true
       redprotect.flag.lever: true
       redprotect.flag.button: true
@@ -45,7 +45,7 @@ permissions:
       redprotect.flag.button: true
       redprotect.flag.door: true
       redprotect.flag.mobs: true
-      redprotect.flag.animals: true
+      redprotect.flag.passives: true
   redprotect.admin:
     description: "Recommended Admin permsisions."
     default: op
@@ -94,8 +94,8 @@ permissions:
     description: "Toggle the door opening flag."
   redprotect.flag.mobs:
     description: "Toggle the mob spawning flag."
-  redprotect.flag.animals:
-    description: "Toggle the animal hurting flag."
+  redprotect.flag.passives:
+    description: "Toggle the passive mob attacking flag."
   redprotect.admin.delete:
     description: "Delete any region."
   redprotect.admin.removeowner:
@@ -122,3 +122,5 @@ permissions:
     description: "Make any number of regions."
   redprotect.magicwand:
     description: "Allows you to use the magic wand"
+  redprotect.infowand:
+    description: "Allows you to use the information wand"

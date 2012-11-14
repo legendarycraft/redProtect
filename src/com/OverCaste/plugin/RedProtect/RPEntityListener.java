@@ -1,19 +1,12 @@
 package com.OverCaste.plugin.RedProtect;
 
+import static org.bukkit.ChatColor.RED;
+
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Animals;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.entity.*;
+import org.bukkit.event.*;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
 
 public class RPEntityListener implements Listener {
 	RedProtect plugin;
@@ -23,7 +16,7 @@ public class RPEntityListener implements Listener {
 	}
 	
 	static final String noPvPMsg = (ChatColor.RED + "You can't PvP in this region!");
-	static final String noAnimalMsg = (ChatColor.RED + "You can't kill animals in this region!");
+	static final String noPassiveHurtMsg = (ChatColor.RED + "You can't hurt passive entities in this region!");
 	
 	/*@EventHandler(priority = EventPriority.NORMAL)
 	public void onEndermanPickup(EndermanPickupEvent e) {
@@ -83,12 +76,18 @@ public class RPEntityListener implements Listener {
 	    		Arrow a = (Arrow) e2;
 	    		e2 = a.getShooter();
 	    		a = null;
+		    	if(e2 == null) {
+		    		return;
+		    	}
 	    	}
-	        //if(!(event.getEntity() instanceof Player)) return;
-	        //No damage to you
-	        //Player player = (Player)event.getEntity();
 	        Region r1 = RedProtect.rm.getRegion(e1.getLocation());
 	        Region r2 = RedProtect.rm.getRegion(e2.getLocation());
+	    	if(e1.getType() == EntityType.ITEM_FRAME || e1.getType() == EntityType.PAINTING) {
+	    		if(!r1.canBuild((Player)e2)) {
+	    			((Player)e2).sendMessage(RED + "You can't build here!");
+	    			event.setCancelled(true);
+	    		}
+	    	}
 	        if(e1 instanceof Player) { //e1 is a player
 	        	//Player p1 = (Player)e1;
 	        	if(e2 instanceof Player){ //e1 is player, e2 is player (pvp)
@@ -117,14 +116,18 @@ public class RPEntityListener implements Listener {
 	        		}
 	        	}
 	        }
-			else if(e1 instanceof Animals) { //Animal
+			else if((e1 instanceof Animals) || (e1 instanceof Villager)) { //Passive
 				Region r = RedProtect.rm.getRegion(e1.getLocation());
 				if(r != null) {
 					if(e2 instanceof Player) {
 						Player p = (Player)e2;
-						if(!r.canAnimals(p)) {
+						if(!r.canHurtPassives(p)) {
 							event.setCancelled(true);
-							p.sendMessage(noAnimalMsg);
+							p.sendMessage(noPassiveHurtMsg);
+						}
+					} else {
+						if(!r.getFlag(6)) {
+							event.setCancelled(true); //something other then a play tried to kill a passive entity
 						}
 					}
 				}
